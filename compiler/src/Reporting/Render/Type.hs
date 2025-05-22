@@ -3,6 +3,7 @@
 module Reporting.Render.Type
   ( Context(..)
   , lambda
+  , aliasExpansion
   , apply
   , tuple
   , record
@@ -46,6 +47,16 @@ lambda context arg1 arg2 args =
     Func -> D.cat [ "(", lambdaDoc, ")" ]
     App  -> D.cat [ "(", lambdaDoc, ")" ]
 
+aliasExpansion :: Context -> Doc -> Doc -> Doc
+aliasExpansion context alias expansion =
+  let
+    innerDoc =
+      D.align $ D.hang 4 $ D.sep [alias <+> "=", expansion]
+  in
+  case context of
+    None -> innerDoc
+    Func -> D.cat [ "(", innerDoc, ")" ]
+    App  -> D.cat [ "(", innerDoc, ")" ]
 
 apply :: Context -> Doc -> [Doc] -> Doc
 apply context name args =

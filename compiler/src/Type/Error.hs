@@ -304,8 +304,12 @@ toDiff localizer ctx tipe1 tipe2 =
 
     (Alias home1 name1 args1 t1, t2) ->
       case diffAliasedRecord localizer t1 t2 of
-        Just (Diff _ doc2 status) ->
-          Diff (D.dullyellow (aliasToDoc localizer ctx home1 name1 args1)) doc2 status
+        Just (Diff _ doc2 Similar) ->
+          Diff (aliasToDoc localizer ctx home1 name1 args1) doc2 Similar
+
+        Just (Diff doc1 doc2 status) ->
+          -- Diff (D.dullyellow (aliasToDoc localizer ctx home1 name1 args1)) doc2 status
+          Diff (RT.aliasExpansion ctx (D.dullyellow (aliasToDoc localizer ctx home1 name1 args1)) doc1) doc2 status
 
         Nothing ->
           case t2 of
@@ -323,8 +327,12 @@ toDiff localizer ctx tipe1 tipe2 =
 
     (t1, Alias home2 name2 args2 t2) ->
       case diffAliasedRecord localizer t1 t2 of
-        Just (Diff doc1 _ status) ->
-          Diff doc1 (D.dullyellow (aliasToDoc localizer ctx home2 name2 args2)) status
+        Just (Diff doc1 _ Similar) ->
+          Diff doc1 (aliasToDoc localizer ctx home2 name2 args2) Similar
+
+        Just (Diff doc1 doc2 status) ->
+          -- Diff doc1 (D.dullyellow (aliasToDoc localizer ctx home2 name2 args2)) status
+          Diff doc1 (RT.aliasExpansion ctx (D.dullyellow (aliasToDoc localizer ctx home2 name2 args2)) doc2) status
 
         Nothing ->
           case t1 of
