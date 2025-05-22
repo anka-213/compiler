@@ -320,7 +320,7 @@ fromManyNames names =
                 s ->
                   case writeWord8Array# mba# 1# (wordToWord8# 0x4D##) {-M-} s of
                     s ->
-                      case writeWord8Array# mba# 2# (wordToWord8# 0x24##) {-$-} s of
+                      case writeWord8Array# mba# 2# (wordToWord8# 0x24##) {- $ -} s of
                         s ->
                           case copyByteArray# ba# 0# mba# 3# len# s of
                             s ->
