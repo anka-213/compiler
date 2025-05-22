@@ -138,6 +138,9 @@ data Canonical =
 
 -- INSTANCES
 
+instance Show Canonical where
+  show = show . _module
+
 
 instance Eq Canonical where
   (==) (Canonical pkg1 name1) (Canonical pkg2 name2) =

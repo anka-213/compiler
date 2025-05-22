@@ -28,6 +28,8 @@ import qualified Elm.ModuleName as ModuleName
 import qualified Reporting.Doc as D
 import qualified Reporting.Render.Type as RT
 import qualified Reporting.Render.Type.Localizer as L
+import qualified Debug.Trace as Debug
+import qualified Debug.Trace
 
 
 
@@ -47,20 +49,21 @@ data Type
   | Unit
   | Tuple Type Type (Maybe Type)
   | Alias ModuleName.Canonical Name.Name [(Name.Name, Type)] Type
-
+  deriving Show
 
 data Super
   = Number
   | Comparable
   | Appendable
   | CompAppend
-  deriving (Eq)
+  deriving (Eq, Show)
 
 
 data Extension
   = Closed
   | FlexOpen Name.Name
   | RigidOpen Name.Name
+  deriving Show
 
 
 iteratedDealias :: Type -> Type
@@ -160,11 +163,13 @@ extToDoc ext =
 
 data Diff a =
   Diff a a Status
+  deriving Show
 
 
 data Status
   = Similar
   | Different (Bag.Bag Problem)
+  deriving Show
 
 
 data Problem
@@ -181,9 +186,11 @@ data Problem
   | BadRigidSuper Super Name.Name Type
   | FieldTypo Name.Name [Name.Name]
   | FieldsMissing [Name.Name]
+  deriving Show
 
 
 data Direction = Have | Need
+  deriving Show
 
 
 instance Functor Diff where
@@ -303,6 +310,7 @@ toDiff localizer ctx tipe1 tipe2 =
         Bag.empty
 
     (Alias home1 name1 args1 t1, t2) ->
+      -- Debug.trace ("diff alias1:\n\n" ++ show (tipe1, tipe2) ++ "\n\n") $
       case diffAliasedRecord localizer t1 t2 of
         Just (Diff _ doc2 status) ->
           Diff (D.dullyellow (aliasToDoc localizer ctx home1 name1 args1)) doc2 status
@@ -322,6 +330,7 @@ toDiff localizer ctx tipe1 tipe2 =
                 Bag.empty
 
     (t1, Alias home2 name2 args2 t2) ->
+      -- Debug.trace ("diff alias2:\n\n" ++ show (tipe1, tipe2) ++ "\n\n") $
       case diffAliasedRecord localizer t1 t2 of
         Just (Diff doc1 _ status) ->
           Diff doc1 (D.dullyellow (aliasToDoc localizer ctx home2 name2 args2)) status
