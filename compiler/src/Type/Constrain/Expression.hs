@@ -474,7 +474,7 @@ constrainTuple rtv region a b maybeC expected =
               let tupleType = TupleN aType bType (Just cType)
               let tupleCon = CEqual region Tuple tupleType expected
 
-              return $ exists [ aVar, bVar, cVar ] $ CAnd [ tupleCon, aCon, bCon, cCon ]
+              return $ exists [ aVar, bVar, cVar ] $ CAnd [ aCon, bCon, cCon, tupleCon ]
 
 
 
