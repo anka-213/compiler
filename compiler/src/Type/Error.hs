@@ -44,7 +44,7 @@ data Type
   | FlexSuper Super Name.Name
   | RigidVar Name.Name
   | RigidSuper Super Name.Name
-  | Type ModuleName.Canonical Name.Name [Type]
+  | Type ModuleName.Canonical Name.Name [Type] (Maybe Type)
   | Record (Map.Map Name.Name Type) Extension
   | Unit
   | Tuple Type Type (Maybe Type)
@@ -107,7 +107,7 @@ toDoc localizer ctx tipe =
     RigidSuper _ name ->
       D.fromName name
 
-    Type home name args ->
+    Type home name args _ ->
       RT.apply ctx
         (L.toDoc localizer home name)
         (map (toDoc localizer RT.App) args)
@@ -281,7 +281,7 @@ toDiff localizer ctx tipe1 tipe2 =
     (Record fields1 ext1, Record fields2 ext2) ->
       diffRecord localizer fields1 ext1 fields2 ext2
 
-    (Type home1 name1 args1, Type home2 name2 args2) | home1 == home2 && name1 == name2 ->
+    (Type home1 name1 args1 _, Type home2 name2 args2 _) | home1 == home2 && name1 == name2 ->
       RT.apply ctx (L.toDoc localizer home1 name1)
         <$> sequenceA (zipWith (toDiff localizer RT.App) args1 args2)
 
@@ -291,19 +291,19 @@ toDiff localizer ctx tipe1 tipe2 =
 
     -- start trying to find specific problems
 
-    (Type home1 name1 args1, Type home2 name2 args2) | L.toChars localizer home1 name1 == L.toChars localizer home2 name2 ->
+    (Type home1 name1 args1 _, Type home2 name2 args2 _) | L.toChars localizer home1 name1 == L.toChars localizer home2 name2 ->
       different
         (nameClashToDoc ctx localizer home1 name1 args1)
         (nameClashToDoc ctx localizer home2 name2 args2)
         Bag.empty
 
-    (Type home name [t1], t2) | isMaybe home name && isSimilar (toDiff localizer ctx t1 t2) ->
+    (Type home name [t1] _, t2) | isMaybe home name && isSimilar (toDiff localizer ctx t1 t2) ->
       different
         (RT.apply ctx (D.dullyellow (L.toDoc localizer home name)) [toDoc localizer RT.App t1])
         (toDoc localizer ctx t2)
         (Bag.one AnythingFromMaybe)
 
-    (t1, Type home name [t2]) | isList home name && isSimilar (toDiff localizer ctx t1 t2) ->
+    (t1, Type home name [t2] _) | isList home name && isSimilar (toDiff localizer ctx t1 t2) ->
       different
         (toDoc localizer ctx t1)
         (RT.apply ctx (D.dullyellow (L.toDoc localizer home name)) [toDoc localizer RT.App t2])
@@ -317,7 +317,7 @@ toDiff localizer ctx tipe1 tipe2 =
 
         Nothing ->
           case t2 of
-            Type home2 name2 args2 | L.toChars localizer home1 name1 == L.toChars localizer home2 name2 ->
+            Type home2 name2 args2 _ | L.toChars localizer home1 name1 == L.toChars localizer home2 name2 ->
               different
                 (nameClashToDoc ctx localizer home1 name1 (map snd args1))
                 (nameClashToDoc ctx localizer home2 name2 args2)
@@ -337,7 +337,7 @@ toDiff localizer ctx tipe1 tipe2 =
 
         Nothing ->
           case t1 of
-            Type home1 name1 args1 | L.toChars localizer home1 name1 == L.toChars localizer home2 name2 ->
+            Type home1 name1 args1 _ | L.toChars localizer home1 name1 == L.toChars localizer home2 name2 ->
               different
                 (nameClashToDoc ctx localizer home1 name1 args1)
                 (nameClashToDoc ctx localizer home2 name2 (map snd args2))
@@ -363,7 +363,7 @@ toDiff localizer ctx tipe1 tipe2 =
           (other, FlexSuper  s x) -> Bag.one $ BadFlexSuper Need s x other
           (other, RigidSuper s x) -> Bag.one $ BadRigidSuper s x other
 
-          (Type home1 name1 [], Type home2 name2 [])
+          (Type home1 name1 [] _, Type home2 name2 [] _)
             | isInt   home1 name1 && isFloat  home2 name2 -> Bag.one IntFloat
             | isFloat home1 name1 && isInt    home2 name2 -> Bag.one IntFloat
             | isInt   home1 name1 && isString home2 name2 -> Bag.one StringFromInt
@@ -452,7 +452,7 @@ isSuper :: Super -> Type -> Bool
 isSuper super tipe =
   Debug.trace (show super ++ ": " ++ show tipe) $
   case iteratedDealias tipe of
-    Type h n args ->
+    Type h n args content ->
       case super of
         Number     -> isInt h n || isFloat h n
         -- This is where we add newtypes

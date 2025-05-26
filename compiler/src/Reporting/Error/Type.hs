@@ -448,7 +448,7 @@ problemToHint problem =
         T.FlexSuper s _  -> badFlexFlexSuper super s
         T.RigidVar y     -> badRigidVar y (toASuperThing super)
         T.RigidSuper s _ -> badRigidSuper s (toASuperThing super)
-        T.Type _ _ _     -> badFlexSuper direction super tipe
+        T.Type _ _ _ _   -> badFlexSuper direction super tipe
         T.Record _ _     -> badFlexSuper direction super tipe
         T.Unit           -> badFlexSuper direction super tipe
         T.Tuple _ _ _    -> badFlexSuper direction super tipe
@@ -463,7 +463,7 @@ problemToHint problem =
         T.FlexSuper s _  -> badRigidVar x (toASuperThing s)
         T.RigidVar y     -> badDoubleRigid x y
         T.RigidSuper _ y -> badDoubleRigid x y
-        T.Type _ n _     -> badRigidVar x ("a `" ++ Name.toChars n ++ "` value")
+        T.Type _ n _ _   -> badRigidVar x ("a `" ++ Name.toChars n ++ "` value")
         T.Record _ _     -> badRigidVar x "a record"
         T.Unit           -> badRigidVar x "a unit value"
         T.Tuple _ _ _    -> badRigidVar x "a tuple"
@@ -478,7 +478,7 @@ problemToHint problem =
         T.FlexSuper s _  -> badRigidSuper super (toASuperThing s)
         T.RigidVar y     -> badDoubleRigid x y
         T.RigidSuper _ y -> badDoubleRigid x y
-        T.Type _ n _     -> badRigidSuper super ("a `" ++ Name.toChars n ++ "` value")
+        T.Type _ n _ _   -> badRigidSuper super ("a `" ++ Name.toChars n ++ "` value")
         T.Record _ _     -> badRigidSuper super "a record"
         T.Unit           -> badRigidSuper super "a unit value"
         T.Tuple _ _ _    -> badRigidSuper super "a tuple"
@@ -567,7 +567,7 @@ badFlexSuper direction super tipe =
               \ Check out" "comparing-records" "for ideas on how to proceed."
           ]
 
-        T.Type _ name _ ->
+        T.Type _ name _ _ ->
           [ D.toSimpleHint $
               "I do not know how to compare `" ++ Name.toChars name ++ "` values. I can only\
               \ compare ints, floats, chars, strings, lists of comparable values, and tuples\
@@ -592,7 +592,7 @@ badFlexSuper direction super tipe =
 
     T.Number ->
       case tipe of
-        T.Type home name _ | T.isString home name ->
+        T.Type home name _ _ | T.isString home name ->
           case direction of
             T.Have ->
               [ D.toFancyHint ["Try","using",D.green "String.fromInt","to","convert","it","to","a","string?"]
@@ -1139,7 +1139,7 @@ badOpRightFallback localizer category op tipe expected =
 isInt :: T.Type -> Bool
 isInt tipe =
   case tipe of
-    T.Type home name [] ->
+    T.Type home name [] _ ->
       T.isInt home name
 
     _ ->
@@ -1149,7 +1149,7 @@ isInt tipe =
 isFloat :: T.Type -> Bool
 isFloat tipe =
   case tipe of
-    T.Type home name [] ->
+    T.Type home name [] _ ->
       T.isFloat home name
 
     _ ->
@@ -1159,7 +1159,7 @@ isFloat tipe =
 isString :: T.Type -> Bool
 isString tipe =
   case tipe of
-    T.Type home name [] ->
+    T.Type home name [] _ ->
       T.isString home name
 
     _ ->
@@ -1169,7 +1169,7 @@ isString tipe =
 isList :: T.Type -> Bool
 isList tipe =
   case tipe of
-    T.Type home name [_] ->
+    T.Type home name [_] _ ->
       T.isList home name
 
     _ ->
@@ -1183,16 +1183,16 @@ isList tipe =
 badConsRight :: L.Localizer -> Category -> T.Type -> T.Type -> RightDocs
 badConsRight localizer category tipe expected =
   case tipe of
-    T.Type home1 name1 [actualElement] | T.isList home1 name1 ->
+    T.Type home1 name1 [actualElement] _ | T.isList home1 name1 ->
       case expected of
-        T.Type home2 name2 [expectedElement] | T.isList home2 name2 ->
+        T.Type home2 name2 [expectedElement] _ | T.isList home2 name2 ->
           EmphBoth
             ( D.reflow "I am having trouble with this (::) operator:"
             , typeComparison localizer expectedElement actualElement
                 "The left side of (::) is:"
                 "But you are trying to put that into a list filled with:"
                 ( case expectedElement of
-                    T.Type home name [_] | T.isList home name ->
+                    T.Type home name [_] _ | T.isList home name ->
                       [ D.toSimpleHint
                           "Are you trying to append two lists? The (++) operator\
                           \ appends lists, whereas the (::) operator is only for\
@@ -1233,7 +1233,7 @@ data AppendType
 toAppendType :: T.Type -> AppendType
 toAppendType tipe =
   case tipe of
-    T.Type home name _
+    T.Type home name _ _
       | T.isInt    home name -> ANumber "Int" "String.fromInt"
       | T.isFloat  home name -> ANumber "Float" "String.fromFloat"
       | T.isString home name -> AString
