@@ -450,12 +450,13 @@ isList home name =
 
 isSuper :: Super -> Type -> Bool
 isSuper super tipe =
+  Debug.trace (show super ++ ": " ++ show tipe) $
   case iteratedDealias tipe of
     Type h n args ->
       case super of
         Number     -> isInt h n || isFloat h n
         -- This is where we add newtypes
-        Comparable -> isInt h n || isFloat h n || isString h n || isChar h n || isList h n && isSuper super (head args)
+        Comparable -> isInt h n || isFloat h n || isString h n || isChar h n || isList h n && isSuper super (head args) --- || Debug.trace "hello" False
         Appendable -> isString h n || isList h n
         CompAppend -> isString h n || isList h n && isSuper Comparable (head args)
 
