@@ -76,6 +76,7 @@ data SubContext
   = TypedIfBranch Index.ZeroBased
   | TypedCaseBranch Index.ZeroBased
   | TypedBody
+  | TypedTupleField Index.ZeroBased
 
 
 data MaybeName
@@ -642,6 +643,14 @@ badFlexFlexSuper s1 s2 =
     ]
 
 
+-- type MyPair = (Int, Char)
+
+-- hello :: MyPair
+-- hello =
+--   if 1 == 1 then
+--     (3, True)
+--   else
+--     False
 
 -- TO EXPR REPORT
 
@@ -666,12 +675,14 @@ toExprReport source localizer exprRegion category tipe expected =
             TypedIfBranch index   -> D.ordinal index <> " branch of this `if` expression:"
             TypedCaseBranch index -> D.ordinal index <> " branch of this `case` expression:"
             TypedBody             -> "body of the `" <> Name.toChars name <> "` definition:"
+            TypedTupleField index -> D.ordinal index <> " field of this tuple:"
 
         itIs =
           case subContext of
             TypedIfBranch index   -> "The " <> D.ordinal index <> " branch is"
             TypedCaseBranch index -> "The " <> D.ordinal index <> " branch is"
             TypedBody             -> "The body is"
+            TypedTupleField index -> "The " <> D.ordinal index <> " field is"
       in
       Report.Report "TYPE MISMATCH" exprRegion [] $
         Code.toSnippet source exprRegion Nothing $

@@ -489,11 +489,22 @@ diffRecord localizer fields1 ext1 fields2 ext2 =
     toUnknownDocs field tipe =
       ( D.dullyellow (D.fromName field), toDoc localizer RT.None tipe )
 
+    addPlaceholder =
+        Map.insert (Name.fromChars "...") (pure (D.fromChars "...", D.fromChars "..."))
+
+    filterSimilarFields :: Map.Map Name.Name (Diff (D.Doc, D.Doc)) -> Map.Map Name.Name (Diff (D.Doc, D.Doc))
+    filterSimilarFields intersection =
+      if length (Map.filter isSimilar intersection) >= 3 then
+        addPlaceholder $ Map.filter (not . isSimilar) intersection
+      else
+        intersection
+
     toOverlapDocs field t1 t2 =
       (,) (D.fromName field) <$> toDiff localizer RT.None t1 t2
 
     left = Map.mapWithKey toUnknownDocs (Map.difference fields1 fields2)
-    both = Map.intersectionWithKey toOverlapDocs fields1 fields2
+    -- both = Map.intersectionWithKey toOverlapDocs fields1 fields2
+    both = filterSimilarFields $ Map.intersectionWithKey toOverlapDocs fields1 fields2
     right = Map.mapWithKey toUnknownDocs (Map.difference fields2 fields1)
 
     fieldsDiff =

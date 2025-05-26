@@ -434,32 +434,47 @@ constrainUpdateField rtv region field (Can.FieldUpdate _ expr) =
 -- CONSTRAIN TUPLE
 
 
+mapExpectation :: Expected Type -> SubContext -> Type -> Expected Type
+mapExpectation expected subCtx tipe =
+  case expected of
+    NoExpectation _ ->
+      NoExpectation tipe
+
+    FromAnnotation name arity _ _ ->
+      FromAnnotation name arity subCtx tipe
+
+    FromContext region context _ ->
+      FromContext region context tipe
+
 constrainTuple :: RTV -> A.Region -> Can.Expr -> Can.Expr -> Maybe Can.Expr -> Expected Type -> IO Constraint
 constrainTuple rtv region a b maybeC expected =
+--       constrainTupleNoExpectation rtv region a b maybeC expected
+-- constrainTupleNoExpectation :: RTV -> A.Region -> Can.Expr -> Can.Expr -> Maybe Can.Expr -> Expected Type -> IO Constraint
+-- constrainTupleNoExpectation rtv region a b maybeC expected =
   do  aVar <- mkFlexVar
       bVar <- mkFlexVar
       let aType = VarN aVar
       let bType = VarN bVar
 
-      aCon <- constrain rtv a (NoExpectation aType)
-      bCon <- constrain rtv b (NoExpectation bType)
+      aCon <- constrain rtv a (mapExpectation expected (TypedTupleField Index.first) aType)
+      bCon <- constrain rtv b (mapExpectation expected (TypedTupleField Index.second) bType)
 
       case maybeC of
         Nothing ->
           do  let tupleType = TupleN aType bType Nothing
               let tupleCon = CEqual region Tuple tupleType expected
-              return $ exists [ aVar, bVar ] $ CAnd [ aCon, bCon, tupleCon ]
+              return $ exists [ aVar, bVar ] $ CAnd [ tupleCon, aCon, bCon ]
 
         Just c ->
           do  cVar <- mkFlexVar
               let cType = VarN cVar
 
-              cCon <- constrain rtv c (NoExpectation cType)
+              cCon <- constrain rtv c (mapExpectation expected (TypedTupleField Index.third) cType)
 
               let tupleType = TupleN aType bType (Just cType)
               let tupleCon = CEqual region Tuple tupleType expected
 
-              return $ exists [ aVar, bVar, cVar ] $ CAnd [ aCon, bCon, cCon, tupleCon ]
+              return $ exists [ aVar, bVar, cVar ] $ CAnd [ tupleCon, aCon, bCon, cCon ]
 
 
 
