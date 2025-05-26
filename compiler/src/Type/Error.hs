@@ -445,6 +445,7 @@ isSuper super tipe =
     Type h n args ->
       case super of
         Number     -> isInt h n || isFloat h n
+        -- This is where we add newtypes
         Comparable -> isInt h n || isFloat h n || isString h n || isChar h n || isList h n && isSuper super (head args)
         Appendable -> isString h n || isList h n
         CompAppend -> isString h n || isList h n && isSuper Comparable (head args)
