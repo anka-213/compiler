@@ -303,50 +303,50 @@ toDiff localizer ctx tipe1 tipe2 =
         Bag.empty
 
     (Alias home1 name1 args1 t1, t2) ->
-      case diffAliasedRecord localizer t1 t2 of
-        Just (Diff _ doc2 Similar) ->
+      case toDiff localizer ctx t1 t2 of
+        (Diff _ doc2 Similar) ->
           Diff (aliasToDoc localizer ctx home1 name1 args1) doc2 Similar
 
-        Just (Diff doc1 doc2 status) ->
+        (Diff doc1 doc2 status) ->
           -- Diff (D.dullyellow (aliasToDoc localizer ctx home1 name1 args1)) doc2 status
           Diff (RT.aliasExpansion ctx (D.dullyellow (aliasToDoc localizer ctx home1 name1 args1)) doc1) doc2 status
 
-        Nothing ->
-          case t2 of
-            Type home2 name2 args2 | L.toChars localizer home1 name1 == L.toChars localizer home2 name2 ->
-              different
-                (nameClashToDoc ctx localizer home1 name1 (map snd args1))
-                (nameClashToDoc ctx localizer home2 name2 args2)
-                Bag.empty
+        -- Nothing ->
+        --   case t2 of
+        --     Type home2 name2 args2 | L.toChars localizer home1 name1 == L.toChars localizer home2 name2 ->
+        --       different
+        --         (nameClashToDoc ctx localizer home1 name1 (map snd args1))
+        --         (nameClashToDoc ctx localizer home2 name2 args2)
+        --         Bag.empty
 
-            _ ->
-              different
-                (D.dullyellow (toDoc localizer ctx tipe1))
-                (D.dullyellow (toDoc localizer ctx tipe2))
-                Bag.empty
+        --     _ ->
+        --       different
+        --         (D.dullyellow (toDoc localizer ctx tipe1))
+        --         (D.dullyellow (toDoc localizer ctx tipe2))
+        --         Bag.empty
 
     (t1, Alias home2 name2 args2 t2) ->
-      case diffAliasedRecord localizer t1 t2 of
-        Just (Diff doc1 _ Similar) ->
+      case toDiff localizer ctx t1 t2 of
+        (Diff doc1 _ Similar) ->
           Diff doc1 (aliasToDoc localizer ctx home2 name2 args2) Similar
 
-        Just (Diff doc1 doc2 status) ->
+        (Diff doc1 doc2 status) ->
           -- Diff doc1 (D.dullyellow (aliasToDoc localizer ctx home2 name2 args2)) status
           Diff doc1 (RT.aliasExpansion ctx (D.dullyellow (aliasToDoc localizer ctx home2 name2 args2)) doc2) status
 
-        Nothing ->
-          case t1 of
-            Type home1 name1 args1 | L.toChars localizer home1 name1 == L.toChars localizer home2 name2 ->
-              different
-                (nameClashToDoc ctx localizer home1 name1 args1)
-                (nameClashToDoc ctx localizer home2 name2 (map snd args2))
-                Bag.empty
+        -- Nothing ->
+        --   case t1 of
+        --     Type home1 name1 args1 | L.toChars localizer home1 name1 == L.toChars localizer home2 name2 ->
+        --       different
+        --         (nameClashToDoc ctx localizer home1 name1 args1)
+        --         (nameClashToDoc ctx localizer home2 name2 (map snd args2))
+        --         Bag.empty
 
-            _ ->
-              different
-                (D.dullyellow (toDoc localizer ctx tipe1))
-                (D.dullyellow (toDoc localizer ctx tipe2))
-                Bag.empty
+        --     _ ->
+        --       different
+        --         (D.dullyellow (toDoc localizer ctx tipe1))
+        --         (D.dullyellow (toDoc localizer ctx tipe2))
+        --         Bag.empty
 
     pair ->
       let
@@ -477,20 +477,6 @@ nameClashToDoc ctx localizer (ModuleName.Canonical _ home) name args =
   RT.apply ctx
     (D.yellow (D.fromName home) <> D.dullyellow ("." <> D.fromName name))
     (map (toDoc localizer RT.App) args)
-
-
-
--- DIFF ALIASED RECORD
-
-
-diffAliasedRecord :: L.Localizer -> Type -> Type -> Maybe (Diff D.Doc)
-diffAliasedRecord localizer t1 t2 =
-  case (iteratedDealias t1, iteratedDealias t2) of
-    (Record fields1 ext1, Record fields2 ext2) ->
-      Just (diffRecord localizer fields1 ext1 fields2 ext2)
-
-    _ ->
-      Nothing
 
 
 
