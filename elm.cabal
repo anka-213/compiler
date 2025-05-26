@@ -216,6 +216,7 @@ Executable elm
         HTTP,
         http-client,
         http-client-tls,
+        tls < 2.0.0,
         http-types,
         language-glsl,
         mtl,
