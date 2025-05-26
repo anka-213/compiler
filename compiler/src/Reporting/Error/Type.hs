@@ -77,6 +77,7 @@ data SubContext
   | TypedCaseBranch Index.ZeroBased
   | TypedBody
   | TypedTupleField Index.ZeroBased
+  | TypedRecordField Name.Name
 
 
 data MaybeName
@@ -676,6 +677,7 @@ toExprReport source localizer exprRegion category tipe expected =
             TypedCaseBranch index -> D.ordinal index <> " branch of this `case` expression:"
             TypedBody             -> "body of the `" <> Name.toChars name <> "` definition:"
             TypedTupleField index -> D.ordinal index <> " field of this tuple:"
+            TypedRecordField name -> "`" <> Name.toChars name <> "` field of this record:"
 
         itIs =
           case subContext of
@@ -683,6 +685,7 @@ toExprReport source localizer exprRegion category tipe expected =
             TypedCaseBranch index -> "The " <> D.ordinal index <> " branch is"
             TypedBody             -> "The body is"
             TypedTupleField index -> "The " <> D.ordinal index <> " field is"
+            TypedRecordField fld  -> "The `" <> Name.toChars fld <> "`  field is"
       in
       Report.Report "TYPE MISMATCH" exprRegion [] $
         Code.toSnippet source exprRegion Nothing $
